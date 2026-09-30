@@ -2,30 +2,39 @@
     <section class="pagina-kop">
         <span class="wenkbrauw">ONTDEK URBAN COURTS</span>
         <h1>Onze velden</h1>
-        <p>Ontdek onze padelbanen, basketbalvelden, zaalvoetbalvelden en het Multicourt. Bekijk de openingstijden en kies waar je wilt spelen.</p>
-        <a class="knop" href="{{ route('reserveren') }}">Zoek een beschikbaar tijdsblok →</a>
+        <p>Kies een dag en zie meteen welke velden die dag nog vrije uren hebben. Reserveren doe je via <a href="{{ route('reserveren', ['datum' => $datum]) }}">Reserveren</a>.</p>
     </section>
+    <form method="get" action="{{ route('velden') }}" class="filters">
+        <x-veld naam="datum" label="Kies een dag" type="date" :waarde="$datum"/>
+        <button class="knop secundair">Toon beschikbaarheid</button>
+    </form>
+    <x-dagkiezer :dagen="$dagen" :datum="$datum" route="velden"/>
     <div class="sectiekop">
-        <h2>Een plek voor jouw sport</h2>
-        <span>{{ $velden->count() }} velden</span>
+        <h2>Beschikbaarheid op {{ \Carbon\CarbonImmutable::parse($datum)->locale('nl')->isoFormat('dddd D MMMM') }}</h2>
+        <span>{{ $velden->where('vrij', '>', 0)->count() }} van {{ $velden->count() }} velden beschikbaar</span>
     </div>
     <div class="kaarten">
-        @forelse($velden as $veld)
+        @forelse($velden as $regel)
+            @php($veld = $regel['veld'])
             <article class="kaart veldkaart">
                 <div class="veld-illustratie {{ $veld->sporttype }}" aria-hidden="true">
                     <div class="kleine-baan"></div>
                     <span>{{ strtoupper($veld->veldtype()) }}</span>
                 </div>
                 <div class="veldtekst">
+                    <span class="status {{ $regel['status']['klasse'] }}">{{ $regel['status']['tekst'] }}</span>
                     <h2>{{ $veld->naam }}</h2>
                     <p>{{ $veld->omschrijving }}</p>
-                    <p><strong>Openingstijden</strong><br>{{ substr($veld->openingstijd, 0, 5) }} – {{ substr($veld->sluitingstijd, 0, 5) }}</p>
-                    <div class="veldvoet">
-                        @if($veld->tarieven->isNotEmpty())
-                            <span>Vanaf <strong>€ {{ number_format($veld->tarieven->min('prijs_per_uur'), 2, ',', '.') }}</strong> / uur</span>
+                    <p class="gedempt">
+                        @if($regel['vrij'] > 0)
+                            {{ $regel['vrij'] }} van {{ $regel['totaal'] }} uur vrij
+                        @elseif($regel['status']['tekst'] === 'Volgeboekt')
+                            Alle uren zijn geboekt of geblokkeerd
+                        @else
+                            Deze dag kan niet meer worden geboekt
                         @endif
-                        <a class="knop secundair" href="{{ route('reserveren', ['veld_id' => $veld->id]) }}">Reserveer dit veld</a>
-                    </div>
+                        · open {{ substr($veld->openingstijd, 0, 5) }} – {{ substr($veld->sluitingstijd, 0, 5) }}
+                    </p>
                 </div>
             </article>
         @empty

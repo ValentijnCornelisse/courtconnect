@@ -1,0 +1,52 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: courtconnect-app
+    ports:
+      - "8000:8000"
+    environment:
+      APP_NAME: CourtConnect
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8000
+      APP_LOCALE: nl
+      APP_FALLBACK_LOCALE: nl
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: courtconnect
+      DB_USERNAME: courtconnect
+      DB_PASSWORD: courtconnect
+      SESSION_DRIVER: database
+      CACHE_STORE: database
+      QUEUE_CONNECTION: database
+    volumes:
+      - .:/var/www/html
+      - vendor:/var/www/html/vendor
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mariadb:11.4
+    container_name: courtconnect-db
+    ports:
+      - "3306:3306"
+    environment:
+      MARIADB_DATABASE: courtconnect
+      MARIADB_USER: courtconnect
+      MARIADB_PASSWORD: courtconnect
+      MARIADB_ROOT_PASSWORD: root
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  db_data:
+  vendor:

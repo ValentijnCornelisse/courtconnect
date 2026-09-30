@@ -1,0 +1,1 @@
+<x-layout titel="404"><section class="smal"><h1>Pagina niet gevonden</h1><x-melding type="fout">Deze pagina bestaat niet of is niet beschikbaar.</x-melding><a class="knop" href="{{ route('home') }}">Terug naar Home</a></section></x-layout>

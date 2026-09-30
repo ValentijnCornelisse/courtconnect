@@ -1,0 +1,1 @@
+<x-layout titel="419"><section class="smal"><h1>Sessie verlopen</h1><x-melding type="fout">Je sessie is verlopen. Vernieuw de pagina en probeer opnieuw.</x-melding><a class="knop" href="{{ route('home') }}">Terug naar Home</a></section></x-layout>

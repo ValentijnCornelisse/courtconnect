@@ -1,0 +1,1 @@
+<x-layout titel="429"><section class="smal"><h1>Even wachten</h1><x-melding type="fout">Je hebt te veel pogingen gedaan. Probeer het over een minuut opnieuw.</x-melding><a class="knop" href="{{ route('home') }}">Terug naar Home</a></section></x-layout>

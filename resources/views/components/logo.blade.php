@@ -1,0 +1,1 @@
+<span class="logo-afbeelding"><img src="{{ asset('images/logo.jpg') }}" alt="CourtConnect — Het veld is van jou." width="1024" height="804"></span>

@@ -1,0 +1,1 @@
+<x-layout titel="403"><section class="smal"><h1>Geen toegang</h1><x-melding type="fout">Je hebt geen toegang tot deze pagina.</x-melding><a class="knop" href="{{ route('home') }}">Terug naar Home</a></section></x-layout>

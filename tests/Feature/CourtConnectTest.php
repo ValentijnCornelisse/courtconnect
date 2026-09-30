@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Blokkade;
 use App\Models\Gebruiker;
 use App\Models\Materiaaltype;
 use App\Models\Reservering;
@@ -52,7 +53,7 @@ class CourtConnectTest extends TestCase
 
     public function test_registratie_negeert_meegegeven_beheerdersrol_en_logt_in(): void
     {
-        $this->post('/registreren', ['naam' => 'Nieuwe klant', 'email' => 'nieuw@example.test', 'wachtwoord' => 'Welkom123!', 'wachtwoord_confirmation' => 'Welkom123!', 'rol' => 'beheerder'])->assertRedirect('/velden');
+        $this->post('/registreren', ['naam' => 'Nieuwe klant', 'email' => 'nieuw@example.test', 'wachtwoord' => 'Welkom123!', 'wachtwoord_confirmation' => 'Welkom123!', 'rol' => 'beheerder'])->assertRedirect('/reserveren');
         $this->assertAuthenticated();
         $this->assertDatabaseHas('gebruikers', ['email' => 'nieuw@example.test', 'rol' => 'klant']);
         $this->assertTrue(Hash::check('Welkom123!', Gebruiker::where('email', 'nieuw@example.test')->first()->wachtwoord));
@@ -62,7 +63,7 @@ class CourtConnectTest extends TestCase
     {
         $this->voorbereiden();
         $this->post('/inloggen', ['email' => 'klant@courtconnect.test', 'wachtwoord' => 'fout'])->assertSessionHasErrors('email');
-        $this->post('/inloggen', ['email' => 'klant@courtconnect.test', 'wachtwoord' => 'Welkom123!'])->assertRedirect('/velden');
+        $this->post('/inloggen', ['email' => 'klant@courtconnect.test', 'wachtwoord' => 'Welkom123!'])->assertRedirect('/reserveren');
         $this->assertAuthenticated();
     }
 
@@ -131,6 +132,27 @@ class CourtConnectTest extends TestCase
         $this->actingAs($klant)->post('/reserveringen/controle', $this->gegevens($veld, ['starttijd' => '11:00', 'duur' => 2]))->assertSessionHasErrors('starttijd');
     }
 
+    public function test_veldenpagina_toont_alleen_beschikbaarheid_voor_de_gekozen_dag(): void
+    {
+        [, $veld] = $this->voorbereiden();
+        Blokkade::create(['veld_id' => $veld->id, 'reden' => 'Groot onderhoud', 'start' => '2026-09-29 09:00', 'einde' => '2026-09-29 23:00', 'aangemaakt_door' => Gebruiker::where('rol', 'beheerder')->value('id')]);
+        $this->get('/velden?datum=2026-09-29')->assertOk()->assertSeeInOrder(['Volgeboekt', 'Padel 1', 'Beschikbaar', 'Padel 2'])->assertSee('14 van 14 uur vrij')
+            ->assertDontSee('Reserveer dit veld')->assertDontSee('name="aantal_spelers"', false);
+        $this->get('/velden?datum=2026-09-27')->assertOk()->assertSee('Niet boekbaar');
+    }
+
+    public function test_reserveerpagina_toont_tijdsblokken_en_boekformulier_op_dezelfde_pagina(): void
+    {
+        [$klant, $veld] = $this->voorbereiden();
+        $this->get('/reserveren?datum=2026-09-28&sporttype=padel')->assertOk()
+            ->assertSee('gekozen_veld='.$veld->id.'&amp;starttijd=12%3A00', false)->assertSee('Klik op een vrij tijdsblok');
+        $url = '/reserveren?datum=2026-09-28&gekozen_veld='.$veld->id.'&starttijd=12:00&duur=2';
+        $this->get($url)->assertSee('Log in om te reserveren');
+        $this->post('/inloggen', ['email' => 'klant@courtconnect.test', 'wachtwoord' => 'Welkom123!'])->assertRedirect('/reserveren?datum=2026-09-28&duur=2&gekozen_veld='.$veld->id.'&starttijd=12%3A00');
+        $this->actingAs($klant)->get($url)->assertOk()->assertSee('12:00 – 14:00')->assertSee('name="veld_id" value="'.$veld->id.'"', false)
+            ->assertSee('Basistarief (2 uur)')->assertSee('Bekijk reservering');
+    }
+
     public function test_controlepagina_toont_eindtijd_voor_duur_uit_formulier(): void
     {
         [$klant, $veld] = $this->voorbereiden();
@@ -172,7 +194,7 @@ class CourtConnectTest extends TestCase
     public function test_alle_schermen_renderen_en_ongeldige_invoer_wordt_gemeld(): void
     {
         [$klant,$veld] = $this->voorbereiden();
-        foreach (['/', '/velden', '/tarieven', '/contact', '/over-ons', '/inloggen', '/registreren', '/velden/'.$veld->id.'/tijden?datum=2026-09-28&starttijd=12:00'] as $url) {
+        foreach (['/', '/velden', '/tarieven', '/contact', '/over-ons', '/inloggen', '/registreren', '/reserveren?gekozen_veld='.$veld->id.'&datum=2026-09-28&starttijd=12:00'] as $url) {
             $this->get($url)->assertOk();
         }
         $this->actingAs($klant)->post('/reserveringen/controle', $this->gegevens($veld, ['aantal_spelers' => 13]))->assertSessionHasErrors(['aantal_spelers' => 'Vul een aantal spelers in tussen 1 en 12.']);
@@ -239,8 +261,9 @@ class CourtConnectTest extends TestCase
     {
         [$klant,$veld] = $this->voorbereiden();
         $type = Materiaaltype::where('naam', 'Racketset')->first();
-        $this->actingAs($klant)->post('/reserveringen/controle', $this->gegevens($veld, ['materiaal' => [$type->id => 2], 'actie' => 'prijs']))->assertRedirect();
-        $this->get('/velden/'.$veld->id.'/tijden?datum=2026-09-28&starttijd=12:00')->assertSee('31,00')->assertSee('2 × Racketset');
+        $this->actingAs($klant)->post('/reserveringen/controle', $this->gegevens($veld, ['materiaal' => [$type->id => 2], 'actie' => 'prijs', 'zoek' => ['sporttype' => 'padel']]))
+            ->assertRedirectContains('sporttype=padel')->assertRedirectContains('gekozen_veld='.$veld->id);
+        $this->get('/reserveren?gekozen_veld='.$veld->id.'&datum=2026-09-28&starttijd=12:00')->assertSee('31,00')->assertSee('2 × Racketset');
         $this->assertDatabaseCount('reserveringen', 4);
     }
 

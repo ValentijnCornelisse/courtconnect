@@ -22,7 +22,7 @@ class ReserveringController extends Controller
         }
         $verzoek->session()->put('reservering', ['gegevens' => $gegevens, 'prijs' => $overzicht['prijs']['totaal']]);
         if (($gegevens['actie'] ?? null) === 'prijs') {
-            return redirect()->route('velden.tijden', ['veld' => $gegevens['veld_id'], 'datum' => $gegevens['datum'], 'starttijd' => $gegevens['starttijd']])->withInput();
+            return redirect()->route('velden.tijden', ['veld' => $gegevens['veld_id'], 'datum' => $gegevens['datum'], 'starttijd' => $gegevens['starttijd'], 'duur' => $gegevens['duur']])->withInput();
         }
 
         return redirect()->route('reserveringen.controle');

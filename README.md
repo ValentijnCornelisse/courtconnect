@@ -38,7 +38,7 @@ De seeder maakt acht velden, tarieven, zes materiaaltypes, vier reserveringen en
 2. Beheer velden en aaneensluitende tariefregels onder `/beheer/velden`.
 3. Probeer een blokkade over een bestaande boeking: de melding noemt het aantal conflicten.
 4. Bekijk materiaalvoorraad voor een datum en uur onder `/beheer/materiaal`.
-5. Log in als klant, zoek onder `/reserveren`, kies een vrije starttijd, een duur van 1 tot 3 uur en materiaal. Kies bijvoorbeeld 16:00 met 2 uur om dal- en piektarief in één boeking te zien.
+5. Bekijk onder `/velden` per dag welke velden nog vrij zijn. Log daarna in als klant en open `/reserveren`: klik op een vrij tijdsblok en kies in het boekpaneel ernaast een duur van 1 tot 3 uur en materiaal. Kies bijvoorbeeld 16:00 met 2 uur om dal- en piektarief in één boeking te zien.
 6. Gebruik **Prijs bijwerken** voor de prijsopbouw in het zijpaneel. Controleer daarna het overzicht en bevestig.
 7. Annuleer onder `/mijn-reserveringen`: dit kan alleen vóór de starttijd.
 8. Open als klant een beheer-URL voor de nette melding bij geweigerde toegang.

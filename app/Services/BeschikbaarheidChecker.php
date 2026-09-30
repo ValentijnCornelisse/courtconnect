@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\MateriaalReservering;
 use App\Models\Materiaaltype;
+use App\Models\Reservering;
 use App\Models\Veld;
 use Carbon\CarbonImmutable;
 
@@ -35,14 +36,41 @@ class BeschikbaarheidChecker
         return $blokken;
     }
 
-    public function isVrij(Veld $veld, string $datum, string $starttijd): bool
+    public function isVrij(Veld $veld, string $datum, string $starttijd, int $duur = 1): bool
     {
-        return collect($this->blokken($veld, $datum))->contains(fn ($blok) => $blok['start'] === substr($starttijd, 0, 5) && $blok['status'] === 'vrij');
+        $blokken = collect($this->blokken($veld, $datum))->values();
+        $index = $blokken->search(fn ($blok) => $blok['start'] === substr($starttijd, 0, 5));
+        if ($index === false) {
+            return false;
+        }
+
+        return $blokken->slice($index, $duur)->where('status', 'vrij')->count() === $duur;
     }
 
-    public function materiaalVrij(Materiaaltype $type, string $datum, string $starttijd): int
+    public function maximaleDuur(Veld $veld, string $datum, string $starttijd): int
+    {
+        $duur = 0;
+        while ($duur < Reservering::MAXIMALE_DUUR && $this->isVrij($veld, $datum, $starttijd, $duur + 1)) {
+            $duur++;
+        }
+
+        return $duur;
+    }
+
+    public function materiaalVrij(Materiaaltype $type, string $datum, string $starttijd, int $duur = 1): int
     {
         $start = CarbonImmutable::parse("$datum $starttijd");
+        $vrij = $type->totaal_aantal;
+        for ($uur = 0; $uur < $duur; $uur++) {
+            $vrij = min($vrij, $this->materiaalVrijInUur($type, $start->addHours($uur)));
+        }
+
+        return $vrij;
+    }
+
+    private function materiaalVrijInUur(Materiaaltype $type, CarbonImmutable $start): int
+    {
+        $datum = $start->toDateString();
         $einde = $start->addHour();
         $gereserveerd = MateriaalReservering::where('materiaaltype_id', $type->id)
             ->whereHas('reservering', fn ($query) => $query->where('status', 'bevestigd')

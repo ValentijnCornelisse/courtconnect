@@ -16,7 +16,7 @@ class AuthenticatieController extends Controller
         $service->inloggen($verzoek->validated());
         $verzoek->session()->regenerate();
 
-        return redirect()->intended(route($verzoek->user()->rol === 'beheerder' ? 'beheer.weekrooster' : 'velden'));
+        return redirect()->intended(route($verzoek->user()->rol === 'beheerder' ? 'beheer.weekrooster' : 'reserveren'));
     }
 
     public function registreren(RegistrerenRequest $verzoek, AuthenticatieService $service): RedirectResponse
@@ -24,7 +24,7 @@ class AuthenticatieController extends Controller
         $service->registreren($verzoek->validated());
         $verzoek->session()->regenerate();
 
-        return redirect()->route('velden')->with('succes', 'Je account is aangemaakt.');
+        return redirect()->intended(route('reserveren'))->with('succes', 'Je account is aangemaakt.');
     }
 
     public function uitloggen(Request $verzoek): RedirectResponse

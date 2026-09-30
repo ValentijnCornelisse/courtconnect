@@ -20,7 +20,6 @@ Route::middleware('guest')->group(function () {
 Route::post('/uitloggen', [AuthenticatieController::class, 'uitloggen'])->middleware('auth')->name('uitloggen');
 Route::get('/velden', [VeldController::class, 'overzicht'])->name('velden');
 Route::get('/reserveren', [VeldController::class, 'zoeken'])->name('reserveren');
-Route::get('/velden/{veld}/tijden', [VeldController::class, 'tijden'])->name('velden.tijden');
 
 Route::middleware(['auth', 'rol:klant'])->group(function () {
     Route::post('/reserveringen/controle', [ReserveringController::class, 'controle'])->name('reserveringen.voorbereiden');

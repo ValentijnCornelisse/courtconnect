@@ -1,0 +1,2 @@
+@props(['dagen', 'datum', 'route', 'parameters' => []])
+<nav class="dagen" aria-label="Kies een dag">@foreach($dagen as $dag)<a class="{{ $dag->format('Y-m-d') === $datum ? 'gekozen' : '' }}" href="{{ route($route, ['datum' => $dag->format('Y-m-d')] + $parameters) }}" @if($dag->format('Y-m-d') === $datum) aria-current="date" @endif>{{ $dag->locale('nl')->isoFormat('ddd') }}<strong>{{ $dag->format('d/m') }}</strong></a>@endforeach</nav>

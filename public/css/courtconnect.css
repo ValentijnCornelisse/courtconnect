@@ -11,4 +11,4 @@
 .bovenbalk{padding-block:12px}
 .footer-inhoud .logo{flex-shrink:0}
 .smal>.logo{display:inline-block;margin-bottom:24px}
-@media(max-width:640px){.logo-afbeelding{width:220px}.bovenbalk{padding-block:10px}}
+@media(max-width:640px){.logo-afbeelding{width:220px}.bovenbalk{padding-block:10px}}.reserveerkaart{padding:20px 22px}.reserveerkaart.actief{border-color:var(--groen);box-shadow:0 0 0 1px var(--groen)}.reserveerkop{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.reserveerkop h3{margin:6px 0 0}.reserveerkaart>.gedempt{font-size:.82rem;margin:6px 0 14px}.blokken.compact{grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px}.blokken.compact .tijdblok{padding:10px 4px;font-size:.82rem}.blokken.compact .melding{grid-column:1/-1}@media(min-width:1001px){.boekpaneel{position:sticky;top:20px}}

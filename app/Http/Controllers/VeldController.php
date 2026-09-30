@@ -51,8 +51,10 @@ class VeldController extends Controller
         $conceptPast = ($concept['veld_id'] ?? null) == $veld->id && ($concept['datum'] ?? null) === $datum && ($concept['starttijd'] ?? null) === $starttijd;
         $gekozenMateriaal = old('materiaal', $conceptPast ? ($concept['materiaal'] ?? []) : []);
         $spelers = old('aantal_spelers', $conceptPast ? $concept['aantal_spelers'] : 2);
-        if ($starttijd && $checker->isVrij($veld, $datum, $starttijd)) {
-            $materiaal = Materiaaltype::where('sporttype', $veld->sporttype)->orderBy('id')->get()->map(fn ($type) => ['type' => $type, 'vrij' => $checker->materiaalVrij($type, $datum, $starttijd)]);
+        $maximaleDuur = $starttijd ? $checker->maximaleDuur($veld, $datum, $starttijd) : 0;
+        $duur = min($maximaleDuur, max(1, (int) old('duur', $gegevens['duur'] ?? ($conceptPast ? ($concept['duur'] ?? 1) : 1))));
+        if ($maximaleDuur > 0) {
+            $materiaal = Materiaaltype::where('sporttype', $veld->sporttype)->orderBy('id')->get()->map(fn ($type) => ['type' => $type, 'vrij' => $checker->materiaalVrij($type, $datum, $starttijd, $duur)]);
             $keuzes = [];
             foreach ($materiaal as $regel) {
                 $aantal = min($regel['vrij'], max(0, (int) ($gekozenMateriaal[$regel['type']->id] ?? 0)));
@@ -61,10 +63,11 @@ class VeldController extends Controller
                     $keuzes[] = ['type' => $regel['type'], 'aantal' => $aantal];
                 }
             }
-            $prijs = $calculator->bereken($veld, $datum, $starttijd, $keuzes);
+            $prijs = $calculator->bereken($veld, $datum, $starttijd, $keuzes, $duur);
         }
+        $eindtijd = $starttijd ? CarbonImmutable::parse($starttijd)->addHours($duur)->format('H:i') : null;
 
-        return view('velden.tijden', compact('veld', 'datum', 'blokken', 'starttijd', 'dagen', 'materiaal', 'prijs', 'gekozenMateriaal', 'spelers'));
+        return view('velden.tijden', compact('veld', 'datum', 'blokken', 'starttijd', 'eindtijd', 'duur', 'maximaleDuur', 'dagen', 'materiaal', 'prijs', 'gekozenMateriaal', 'spelers'));
     }
 
     public function tarieven(): View

@@ -8,14 +8,14 @@ use Illuminate\Validation\ValidationException;
 
 class PrijsCalculator
 {
-    public function bereken(Veld $veld, string $datum, string $starttijd, array $materialen = []): array
+    public function bereken(Veld $veld, string $datum, string $starttijd, array $materialen = [], int $duur = 1): array
     {
         $start = CarbonImmutable::parse("$datum $starttijd");
         $veld->loadMissing('tarieven');
         $dagtype = $start->isWeekend() ? 'weekend' : 'doordeweeks';
-        $basis = (int) round((float) $veld->tarieven->min('prijs_per_uur') * 100);
+        $basis = (int) round((float) $veld->tarieven->min('prijs_per_uur') * 100) * $duur;
         $som = 0;
-        for ($minuut = 0; $minuut < 60; $minuut++) {
+        for ($minuut = 0; $minuut < 60 * $duur; $minuut++) {
             $tijd = $start->addMinutes($minuut)->format('H:i:s');
             $regels = $veld->tarieven->filter(fn ($regel) => $regel->dagtype === $dagtype && $regel->starttijd <= $tijd && $regel->eindtijd > $tijd);
             if ($regels->count() !== 1) {
@@ -33,6 +33,6 @@ class PrijsCalculator
             throw ValidationException::withMessages(['materiaal' => 'De totaalprijs is te hoog. Kies minder materiaal.']);
         }
 
-        return ['basis' => $basis, 'piek' => $veldprijs - $basis, 'materiaal' => $regels, 'totaal' => $totaal];
+        return ['uren' => $duur, 'basis' => $basis, 'piek' => $veldprijs - $basis, 'materiaal' => $regels, 'totaal' => $totaal];
     }
 }

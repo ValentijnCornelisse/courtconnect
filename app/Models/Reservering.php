@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Reservering extends Model
 {
+    public const MAXIMALE_DUUR = 3;
+
     protected function datum(): Attribute
     {
         return Attribute::make(set: fn ($waarde) => Carbon::parse($waarde)->toDateString());

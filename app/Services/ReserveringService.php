@@ -18,8 +18,9 @@ class ReserveringService
     public function overzicht(array $gegevens): array
     {
         $veld = Veld::findOrFail($gegevens['veld_id']);
-        if (! $this->beschikbaarheid->isVrij($veld, $gegevens['datum'], $gegevens['starttijd'])) {
-            throw ValidationException::withMessages(['starttijd' => 'Dit tijdsblok is zojuist door iemand anders gereserveerd.']);
+        $duur = (int) ($gegevens['duur'] ?? 1);
+        if (! $this->beschikbaarheid->isVrij($veld, $gegevens['datum'], $gegevens['starttijd'], $duur)) {
+            throw ValidationException::withMessages(['starttijd' => 'Het veld is niet de hele gekozen tijd vrij. Kies een ander tijdsblok of een kortere duur.']);
         }
         $materialen = [];
         foreach ($gegevens['materiaal'] ?? [] as $id => $aantal) {
@@ -27,13 +28,13 @@ class ReserveringService
                 continue;
             }
             $type = Materiaaltype::find($id);
-            if (! $type || $type->sporttype !== $veld->sporttype || $this->beschikbaarheid->materiaalVrij($type, $gegevens['datum'], $gegevens['starttijd']) < $aantal) {
+            if (! $type || $type->sporttype !== $veld->sporttype || $this->beschikbaarheid->materiaalVrij($type, $gegevens['datum'], $gegevens['starttijd'], $duur) < $aantal) {
                 throw ValidationException::withMessages(["materiaal.$id" => 'Dit materiaal is zojuist door iemand anders gereserveerd. Kies minder sets.']);
             }
             $materialen[] = ['type' => $type, 'aantal' => (int) $aantal];
         }
 
-        return ['veld' => $veld, 'gegevens' => $gegevens, 'materialen' => $materialen, 'prijs' => $this->prijzen->bereken($veld, $gegevens['datum'], $gegevens['starttijd'], $materialen)];
+        return ['veld' => $veld, 'gegevens' => $gegevens, 'materialen' => $materialen, 'prijs' => $this->prijzen->bereken($veld, $gegevens['datum'], $gegevens['starttijd'], $materialen, $duur)];
     }
 
     public function bevestigen(Gebruiker $klant, array $gegevens, int $verwachtePrijs): Reservering
@@ -49,8 +50,8 @@ class ReserveringService
                 }
                 $reservering = Reservering::create([
                     'klant_id' => $klant->id, 'veld_id' => $gegevens['veld_id'], 'datum' => $gegevens['datum'],
-                    'starttijd' => $gegevens['starttijd'],
-                    'eindtijd' => CarbonImmutable::parse($gegevens['starttijd'])->addHour()->format('H:i:s'),
+                    'starttijd' => CarbonImmutable::parse($gegevens['starttijd'])->format('H:i:s'),
+                    'eindtijd' => CarbonImmutable::parse($gegevens['starttijd'])->addHours((int) ($gegevens['duur'] ?? 1))->format('H:i:s'),
                     'aantal_spelers' => $gegevens['aantal_spelers'], 'status' => 'bevestigd',
                     'totaalprijs' => number_format($overzicht['prijs']['totaal'] / 100, 2, '.', ''),
                 ]);

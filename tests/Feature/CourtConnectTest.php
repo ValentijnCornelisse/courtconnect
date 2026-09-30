@@ -30,7 +30,7 @@ class CourtConnectTest extends TestCase
 
     private function gegevens(Veld $veld, array $extra = []): array
     {
-        return array_replace(['veld_id' => $veld->id, 'datum' => '2026-09-28', 'starttijd' => '12:00', 'aantal_spelers' => 4, 'materiaal' => []], $extra);
+        return array_replace(['veld_id' => $veld->id, 'datum' => '2026-09-28', 'starttijd' => '12:00', 'duur' => 1, 'aantal_spelers' => 4, 'materiaal' => []], $extra);
     }
 
     public function test_seeders_maken_acht_velden_en_geldige_prijzen_en_hashes(): void
@@ -108,8 +108,54 @@ class CourtConnectTest extends TestCase
     {
         [, $veld] = $this->voorbereiden();
         $calculator = app(PrijsCalculator::class);
-        $this->assertSame(['basis' => 2400, 'piek' => 600, 'materiaal' => [], 'totaal' => 3000], $calculator->bereken($veld, '2026-10-03', '10:00'));
+        $this->assertSame(['uren' => 1, 'basis' => 2400, 'piek' => 600, 'materiaal' => [], 'totaal' => 3000], $calculator->bereken($veld, '2026-10-03', '10:00'));
         $this->assertSame(2700, $calculator->bereken($veld, '2026-09-28', '16:30')['totaal']);
+    }
+
+    public function test_prijs_van_meerdere_uren_telt_dal_en_piek_per_uur(): void
+    {
+        [, $veld] = $this->voorbereiden();
+        $prijs = app(PrijsCalculator::class)->bereken($veld, '2026-09-28', '16:00', [], 2);
+        $this->assertSame(['uren' => 2, 'basis' => 4800, 'piek' => 600, 'materiaal' => [], 'totaal' => 5400], $prijs);
+    }
+
+    public function test_reservering_van_twee_uur_blokkeert_beide_uren_en_slaat_eindtijd_op(): void
+    {
+        [$klant, $veld] = $this->voorbereiden();
+        $boeking = app(ReserveringService::class)->bevestigen($klant, $this->gegevens($veld, ['duur' => 2]), 4800);
+        $this->assertSame('14:00:00', $boeking->eindtijd);
+        $checker = app(BeschikbaarheidChecker::class);
+        $this->assertFalse($checker->isVrij($veld, '2026-09-28', '13:00'));
+        $this->assertTrue($checker->isVrij($veld, '2026-09-28', '14:00'));
+        $this->assertSame(1, $checker->maximaleDuur($veld, '2026-09-28', '11:00'));
+        $this->actingAs($klant)->post('/reserveringen/controle', $this->gegevens($veld, ['starttijd' => '11:00', 'duur' => 2]))->assertSessionHasErrors('starttijd');
+    }
+
+    public function test_controlepagina_toont_eindtijd_voor_duur_uit_formulier(): void
+    {
+        [$klant, $veld] = $this->voorbereiden();
+        $this->actingAs($klant)->post('/reserveringen/controle', $this->gegevens($veld, ['starttijd' => '15:00', 'duur' => '3']))->assertRedirect('/reserveringen/controle');
+        $this->get('/reserveringen/controle')->assertOk()->assertSee('15:00 – 18:00 (3 uur)')->assertSee('Basistarief (3 uur)');
+        $this->post('/reserveringen/bevestigen')->assertRedirect('/mijn-reserveringen');
+        $this->assertDatabaseHas('reserveringen', ['veld_id' => $veld->id, 'starttijd' => '15:00:00', 'eindtijd' => '18:00:00']);
+    }
+
+    public function test_duur_moet_tussen_een_en_drie_uur_en_binnen_openingstijd_vallen(): void
+    {
+        [$klant, $veld] = $this->voorbereiden();
+        $this->actingAs($klant)->post('/reserveringen/controle', $this->gegevens($veld, ['duur' => 4]))->assertSessionHasErrors(['duur' => 'Kies een duur van 1, 2 of 3 uur.']);
+        $this->post('/reserveringen/controle', $this->gegevens($veld, ['starttijd' => '22:00', 'duur' => 2]))->assertSessionHasErrors('starttijd');
+        $this->assertSame(1, app(BeschikbaarheidChecker::class)->maximaleDuur($veld, '2026-09-28', '22:00'));
+    }
+
+    public function test_materiaal_is_vrij_als_het_in_elk_gekozen_uur_vrij_is(): void
+    {
+        [$klant, $veld] = $this->voorbereiden();
+        $type = Materiaaltype::where('naam', 'Racketset')->first();
+        app(ReserveringService::class)->bevestigen($klant, $this->gegevens($veld, ['starttijd' => '13:00', 'materiaal' => [$type->id => 3]]), 3450);
+        $checker = app(BeschikbaarheidChecker::class);
+        $this->assertSame(5, $checker->materiaalVrij($type, '2026-09-28', '12:00'));
+        $this->assertSame(2, $checker->materiaalVrij($type, '2026-09-28', '12:00', 2));
     }
 
     public function test_blokkade_met_bevestigde_reservering_wordt_geweigerd(): void

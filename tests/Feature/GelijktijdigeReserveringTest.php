@@ -70,6 +70,8 @@ class GelijktijdigeReserveringTest extends TestCase
             foreach ($bestanden as $bestand) {
                 unlink($bestand);
             }
+            // De processen committen echt; ruim op zodat volgende tests met een lege database beginnen.
+            $this->artisan('migrate:fresh', ['--force' => true]);
         }
     }
 

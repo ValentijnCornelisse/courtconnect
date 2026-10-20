@@ -18,7 +18,7 @@ class BeheerService
         return DB::transaction(function () use ($gegevens, $veld) {
             if ($veld) {
                 $veld = Veld::whereKey($veld->id)->lockForUpdate()->firstOrFail();
-                if ($veld->reserveringen()->where('status', 'bevestigd')->where('datum', '>=', today())->exists()
+                if ($veld->reserveringen()->where('status', 'bevestigd')->where('datum', '>=', today()->toDateString())->exists()
                     && ($veld->sporttype !== $gegevens['sporttype'] || substr($veld->openingstijd, 0, 5) !== $gegevens['openingstijd'] || substr($veld->sluitingstijd, 0, 5) !== $gegevens['sluitingstijd'])) {
                     throw ValidationException::withMessages(['openingstijd' => 'Dit veld heeft nog reserveringen. Wijzig de sport of openingstijden pas nadat deze zijn afgehandeld.']);
                 }
@@ -64,7 +64,7 @@ class BeheerService
         DB::transaction(function () use ($gegevens, $materiaal) {
             if ($materiaal) {
                 $materiaal = Materiaaltype::whereKey($materiaal->id)->lockForUpdate()->firstOrFail();
-                $toewijzingen = MateriaalReservering::with('reservering')->where('materiaaltype_id', $materiaal->id)->whereHas('reservering', fn ($query) => $query->where('status', 'bevestigd')->where('datum', '>=', today()))->get();
+                $toewijzingen = MateriaalReservering::with('reservering')->where('materiaaltype_id', $materiaal->id)->whereHas('reservering', fn ($query) => $query->where('status', 'bevestigd')->where('datum', '>=', today()->toDateString()))->get();
                 if ($toewijzingen->isNotEmpty() && $gegevens['sporttype'] !== $materiaal->sporttype) {
                     throw ValidationException::withMessages(['sporttype' => 'Dit materiaal is nog toegewezen. De sport kan nu niet worden gewijzigd.']);
                 }

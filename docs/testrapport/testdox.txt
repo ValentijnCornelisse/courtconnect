@@ -1,0 +1,110 @@
+Account (Tests\Feature\Account)
+ [x] Beheerder komt na inloggen op het weekrooster
+ [x] Uitloggen beeindigt de sessie
+ [x] Fout registreren met bestaand e mailadres of zwak wachtwoord
+ [x] Randgeval wachtwoord van precies acht tekens is genoeg
+ [x] Fout na tien mislukte inlogpogingen volgt een pauze
+ [x] Fout ingelogde gebruiker kan niet opnieuw registreren en gast niet uitloggen
+
+Beheer (Tests\Feature\Beheer)
+ [x] Weekrooster toont geboekte en geblokkeerde uren
+ [x] Tariefregels met sleutels uit het javascript worden geaccepteerd
+ [x] Fout tarieven met een gat of sluiting voor opening worden geweigerd
+ [x] Fout veld met reserveringen verwijderen wordt geweigerd en deactiveren kan wel
+ [x] Fout ongeldige blokkade en materiaalinvoer worden gemeld
+ [x] Materiaalpagina toont voorraad per gekozen uur
+
+Beheer Service (Tests\Unit\BeheerService)
+ [x] Veld opslaan vervangt de tariefregels
+ [x] Fout openingstijd wijzigen met toekomstige reservering wordt geweigerd
+ [x] Randgeval alleen reserveringen in het verleden blokkeren de wijziging niet
+ [x] Veld zonder reserveringen wordt verwijderd maar met historie niet
+ [x] Blokkade telt alle overlappende bevestigde boekingen
+ [x] Randgeval blokkade die aansluit op een boeking is toegestaan
+ [x] Randgeval voorraad mag gelijk aan de drukste bezetting maar niet lager
+ [x] Fout sport van toegewezen materiaal kan niet wijzigen
+
+Beschikbaarheid Checker (Tests\Unit\BeschikbaarheidChecker)
+ [x] Open veld heeft veertien vrije uurblokken
+ [x] Randgeval een half uur voor sluiting levert geen blok op
+ [x] Uren in het verleden en een inactief veld zijn niet boekbaar
+ [x] Alleen bevestigde reserveringen maken een blok bezet
+ [x] Blokkade raakt elk uur dat ze overlapt en gaat voor een boeking
+ [x] Randgeval blokkade tot precies het hele uur laat het volgende uur vrij
+ [x] Is vrij weigert tijden buiten het rooster en een te lange duur
+ [x] Maximale duur is drie uur en stopt voor een bezet uur
+ [x] Materiaal vrij neemt het drukste uur en negeert andere dagen en annuleringen
+ [x] Randgeval materiaal vrij wordt nooit negatief
+
+Court Connect (Tests\Feature\CourtConnect)
+ [x] Seeders maken acht velden en geldige prijzen en hashes
+ [x] Klant krijgt nette 403 op beheer en beheerder op boeken
+ [x] Registratie negeert meegegeven beheerdersrol en logt in
+ [x] Inloggen gebruikt nederlandse wachtwoordkolom
+ [x] Klantflow berekent materiaal en slaat pas na bevestiging op
+ [x] Een bezet blok en materiaal kunnen niet opnieuw worden geboekt
+ [x] Annuleren geeft blok vrij maar weigert vreemde of gestarte boeking
+ [x] Prijs splitsing piek weekend en halve uren
+ [x] Prijs van meerdere uren telt dal en piek per uur
+ [x] Reservering van twee uur blokkeert beide uren en slaat eindtijd op
+ [x] Veldenpagina toont alleen beschikbaarheid voor de gekozen dag
+ [x] Reserveerpagina toont tijdsblokken en boekformulier op dezelfde pagina
+ [x] Controlepagina toont eindtijd voor duur uit formulier
+ [x] Duur moet tussen een en drie uur en binnen openingstijd vallen
+ [x] Materiaal is vrij als het in elk gekozen uur vrij is
+ [x] Blokkade met bevestigde reservering wordt geweigerd
+ [x] Alle schermen renderen en ongeldige invoer wordt gemeld
+ [x] Voorraad mag niet onder toegewezen aantal
+ [x] Verleden verkeerde start en onbekend materiaal worden geweigerd
+ [x] Veldnaam wordt geescaped
+ [x] Beheerder kan velden met tariefregels toevoegen wijzigen en verwijderen
+ [x] Beheerder kan materiaal toevoegen en wijzigen
+ [x] Prijs bijwerken en aanpassen behouden de materiaalkeuze
+ [x] Onverwachte fout is neutraal en verkeerde materiaalstructuur geeft validatiefout
+ [x] Unieke index weigert twee bevestigde boekingen maar laat annuleringen toe
+
+Gelijktijdige Reservering (Tests\Feature\GelijktijdigeReservering)
+ [ ] Twee processen kunnen niet hetzelfde blok boeken
+ [ ] Twee velden kunnen niet dezelfde laatste sets boeken
+
+Prijs Calculator (Tests\Unit\PrijsCalculator)
+ [x] Daluur op maandag kost alleen het basistarief
+ [x] Piekuur doordeweeks telt het verschil als piektoeslag
+ [x] Zaterdag en zondag gebruiken het weekendtarief
+ [x] Drie uur over de tariefgrens wordt per minuut verdeeld
+ [x] Materiaal kost een vaste prijs per set ongeacht de duur
+ [x] Randgeval laatste uur voor sluiting heeft een tarief
+ [x] Randgeval afronding naar hele centen
+ [x] Fout tijdsblok zonder tarief wordt geweigerd
+ [x] Fout overlappende tariefregels geven geen prijs
+ [x] Randgeval totaal mag precies het maximum zijn maar niet hoger
+
+Reserveren (Tests\Feature\Reserveren)
+ [x] Zoeken op sport toont alleen velden van die sport
+ [x] Zoeken met tijdvenster toont alleen blokken binnen dat venster
+ [x] Fout tijdvenster met eindtijd voor begintijd wordt gemeld
+ [x] Bezet en onderhoud zijn niet aanklikbaar op de reserveerpagina
+ [x] Gast moet inloggen voor de controlepagina
+ [x] Fout controle of bevestigen zonder gekozen tijdsblok
+ [x] Fout blok dat tijdens het controleren wordt geboekt kan niet meer worden bevestigd
+ [x] Randgeval een en twaalf spelers mogen nul niet
+ [x] Randgeval drie uur tot precies de sluitingstijd
+ [x] Randgeval vandaag kan niet meer in een begonnen uur worden geboekt
+ [x] Fout inactief veld is niet zichtbaar en niet te boeken
+ [x] Mijn reserveringen toont alleen eigen boekingen en annuleerknop alleen bij toekomstige
+ [x] Fout onbekende reservering annuleren geeft 404
+ [x] Boeking van klant is direct zichtbaar in beheer
+
+Reservering Service (Tests\Unit\ReserveringService)
+ [x] Bevestigen slaat reservering met eindtijd prijs en materiaal op
+ [x] Materiaal met aantal nul wordt overgeslagen
+ [x] Randgeval de laatste set mag maar een set te veel niet
+ [x] Fout materiaal van een andere sport wordt geweigerd
+ [x] Fout gewijzigde prijs moet opnieuw worden gecontroleerd
+ [x] Fout een beheerder kan niet zelf boeken
+ [x] Randgeval annuleren kan tot een minuut voor de start maar niet op de starttijd
+ [x] Fout annuleren van een reservering van een ander geeft 403
+
+Serverfout (Tests\Feature\Serverfout)
+ [x] Sessiefout toont een neutrale foutpagina zonder sessie of errors
+
